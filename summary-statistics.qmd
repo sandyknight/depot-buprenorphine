@@ -20,22 +20,58 @@ format:
 I need to load `data.table` here because operators like `.()` or `:=` can't be accessed with `::` in the way e.g. `jsonlite::read_json()` can. 
 
 ```{r setup}
+
 library(data.table)
+
 ```
+The data extract I'm using was initially created for a RAND commission, it came with a data dictionary. Here I define a function to extract the information about the three datasets we're interested in and combine it into one CSV file. 
+
+```{r function-get_data_dictionary}
+get_data_dictionary <-
+  function(dictionary_xlsx = "data/RAND-data-dictionary.xlsx") {
+    if (file.exists("data/data-dictionary.csv")) {
+      return(data.table::fread("data/data-dictionary.csv"))
+    }
+
+    dd_main <-
+      openxlsx::read.xlsx(xlsxFile = "data/RAND-data-dictionary.xlsx",
+                          sheet = "Main table - journeys",
+                          cols = c(1, 2, 4:6)) |>
+      janitor::clean_names() |>
+      dplyr::rename("column" = column_name)
+
+    dd_sir <-
+      openxlsx::read.xlsx(xlsxFile = "data/RAND-data-dictionary.xlsx",
+                          sheet = "SIR table",
+                          cols = c(1:5)) |>
+      janitor::clean_names()
+
+    dd_top <-
+      openxlsx::read.xlsx(xlsxFile = "data/RAND-data-dictionary.xlsx",
+                          sheet = "TOP table",
+                          cols = c(1:5)) |>
+      janitor::clean_names()
+
+    data_dictionary <- data.table::rbindlist(l = list(dd_main, dd_sir, dd_top))
+    data.table::fwrite(data_dictionary, "data/data-dictionary.csv")
+    data_dictionary
+  }
+```
+
 Function to unzip the datafile and inspect what we've got.
 
 ```{r function-unzip_datafile}
 
 unzip_datafile <- function(zipfile = "RAND-LAB-dataset.zip")
-  if (length(list.files("data/")) < 2) {
+  if (!file.exists("data/K3anon_FullDataset_for_VfM.csv")) {
     unzip(file.path("data", zipfile), exdir = "data")
-    list.files("data/")
+    list.files("data/", pattern = "\\.csv")
   } else {
-    list.files("data/")
+    list.files("data/", pattern = "\\.csv")
   }
 ```
 
-```{r}
+```{r unzip-data}
 unzip_datafile()
 ```
 There are three datasets:
@@ -43,11 +79,14 @@ There are three datasets:
 - `r list.files("data")[2]`, which I'll refer to as *sir*, contains date and details of sub-intevention reviews (SIRs), including whether or not the client was receiving LAB at the date of the SIR.
 - `r list.files("data")[3]`, which I'll refer to as *top*
 
+## Data quality
+
 Define a quick validation function to check our datasets
 
 ```{r function-check_data_qualtiy}
 
 check_data_quality <- function(df) {
+
   agent <-
     pointblank::create_agent(tbl = df) |>
     pointblank::col_vals_not_null(dplyr::everything()) |>
@@ -55,23 +94,51 @@ check_data_quality <- function(df) {
     pointblank::rows_complete() |>
     pointblank::interrogate()
 
-  short_summary <- pointblank::get_agent_report(agent) 
-   short_summary[c(tbl_name, assertion_type, n_failed, n_passed, end_time)] 
+  pointblank::get_agent_report(agent)
 
-  # Print short summary
-  print(short_summary)
 }
 
 
 ```
 
-Load the *main* dataset and run the data quality check
+Load the *main* dataset and run the data quality check. For now we only need the first three columns: `client_random_id` and `n_jy` for merging, and utla23cd so we can summarise by area and tranche. 
 
-```{r}
-df <-
+### Main table data validation
+```{r validation-main_table}
+#| cache: true
+Main_table <-
   data.table::fread("data/K3anon_FullDataset_for_VfM.csv")
 
-check_data_quality(df)
+Main_table <- Main_table[, .(client_random_id, n_jy, utla23cd)]
+
+check_data_quality(Main_table)
+```
+
+### SIR table data validation
+
+Load the *sir* dataset and run the data quality check. For now we only need the first three columns: `client_random_id` and `n_jy` for merging,`submoddt` (the date of the SIR), `phbudi_any` (data dictionary: *Calculated field, if any of the depot buprenorphine sub-interventions are ticked*).
+
+```{r validation-sir_table}
+#| cache: true
+SIR_table <-
+  data.table::fread("data/SIR_table_for_VfM_linked.csv")
+
+SIR_table <- SIR_table[, .(client_random_id, n_jy, submoddt, phbudi_any)]
+
+check_data_quality(SIR_table)
+
+```
+We're going to add one additional check for `phbudi_any` to see if it conforms to the expected data type (*1 = Yes, 0 = No/Missing*).
+
+```{r validation-phbudi_any}
+
+agent <- pointblank::create_agent(tbl = SIR_table) |>
+  pointblank::col_vals_in_set(columns = phbudi_any,
+                              set = c(0, 1)) |>
+  pointblank::interrogate()
+
+pointblank::get_agent_report(agent)
+
 ```
 
 Define a function to get the UTLA23 data from an official source and what I hope is a permanent link. Since our main table only has the utla23cd we need this to have any local authority names. 
