@@ -17,16 +17,42 @@ format:
 
 
 
-I need to load `data.table` here because operators like `.()` or `:=` can't be accessed with `::` in the way e.g. `jsonlite::read_json()` can. 
 
 ```{r setup}
+
+## I need to load `data.table` here because operators like `.()` or `:=` can't
+## be accessed with `::` in the way e.g. `jsonlite::read_json()` can.
 
 library(data.table)
 
 ```
-The data extract I'm using was initially created for a RAND commission, it came with a data dictionary. Here I define a function to extract the information about the three datasets we're interested in and combine it into one CSV file. 
+
+```{r function-unzip_datafile}
+#! Function to unzip the datafile and inspect what we've got.
+unzip_datafile <- function(zipfile = "RAND-LAB-dataset.zip")
+  if (!file.exists("data/K3anon_FullDataset_for_VfM.csv")) {
+    unzip(file.path("data", zipfile), exdir = "data")
+    list.files("data/", pattern = "\\.csv")
+  } else {
+    list.files("data/", pattern = "\\.csv")
+  }
+```
+
+```{r unzip-data}
+unzip_datafile()
+```
+There are three datasets:
+- `r list.files("data")[1]`, which I'll refer to as *main*, contains client IDs and characteristics.
+- `r list.files("data")[2]`, which I'll refer to as *sir*, contains date and details of sub-intevention reviews (SIRs), including whether or not the client was receiving LAB at the date of the SIR.
+- `r list.files("data")[3]`, which I'll refer to as *top*
+
+The data extract I'm using was initially created for a RAND commission, it came with a ;
+[@data-dictionary]. 
 
 ```{r function-get_data_dictionary}
+#'A function to extract the information about the three datasets we're
+#' interested in and combine it into one CSV file.
+
 get_data_dictionary <-
   function(dictionary_xlsx = "data/RAND-data-dictionary.xlsx") {
     if (file.exists("data/data-dictionary.csv")) {
@@ -58,45 +84,33 @@ get_data_dictionary <-
   }
 ```
 
-Function to unzip the datafile and inspect what we've got.
-
-```{r function-unzip_datafile}
-
-unzip_datafile <- function(zipfile = "RAND-LAB-dataset.zip")
-  if (!file.exists("data/K3anon_FullDataset_for_VfM.csv")) {
-    unzip(file.path("data", zipfile), exdir = "data")
-    list.files("data/", pattern = "\\.csv")
-  } else {
-    list.files("data/", pattern = "\\.csv")
-  }
-```
-
-```{r unzip-data}
-unzip_datafile()
-```
-There are three datasets:
-- `r list.files("data")[1]`, which I'll refer to as *main*, contains client IDs and characteristics.
-- `r list.files("data")[2]`, which I'll refer to as *sir*, contains date and details of sub-intevention reviews (SIRs), including whether or not the client was receiving LAB at the date of the SIR.
-- `r list.files("data")[3]`, which I'll refer to as *top*
-
 ## Data quality
 
 Define a quick validation function to check our datasets
 
 ```{r function-check_data_qualtiy}
 
-check_data_quality <- function(df) {
 
-  agent <-
-    pointblank::create_agent(tbl = df) |>
-    pointblank::col_vals_not_null(dplyr::everything()) |>
-    pointblank::rows_distinct() |>
-    pointblank::rows_complete() |>
-    pointblank::interrogate()
+check_data_quality <- function(df, table_name = NULL) {
 
-  pointblank::get_agent_report(agent)
+  report <-
+    data.validator::data_validation_report()
 
+  df |>
+    data.validator::validate(name = table_name) |>
+    data.validator::validate_rows(assertr::col_concat,
+                                  assertr::is_uniq,
+                                  dplyr::everything(),
+                                  description = "Duplication") |>
+    data.validator::validate_rows(assertr::num_row_NAs,
+                                  assertr::within_bounds(-1, 0),
+                                  client_random_id, 
+                                  description = "Missingness") |>
+    data.validator::add_results(report)
+
+  return(report)
 }
+
 
 
 ```
@@ -106,40 +120,41 @@ Load the *main* dataset and run the data quality check. For now we only need the
 ### Main table data validation
 ```{r validation-main_table}
 #| cache: true
-Main_table <-
+main_table <-
   data.table::fread("data/K3anon_FullDataset_for_VfM.csv")
 
-Main_table <- Main_table[, .(client_random_id, n_jy, utla23cd)]
+main_table <- main_table[, .(client_random_id, n_jy, utla23cd)]
 
-check_data_quality(Main_table)
+check_data_quality(main_table, table_name = "Main table")
 ```
 
 ### SIR table data validation
 
 Load the *sir* dataset and run the data quality check. For now we only need the first three columns: `client_random_id` and `n_jy` for merging,`submoddt` (the date of the SIR), `phbudi_any` (data dictionary: *Calculated field, if any of the depot buprenorphine sub-interventions are ticked*).
 
-```{r validation-sir_table}
-#| cache: true
-SIR_table <-
-  data.table::fread("data/SIR_table_for_VfM_linked.csv")
-
-SIR_table <- SIR_table[, .(client_random_id, n_jy, submoddt, phbudi_any)]
-
-check_data_quality(SIR_table)
-
-```
 We're going to add one additional check for `phbudi_any` to see if it conforms to the expected data type (*1 = Yes, 0 = No/Missing*).
 
-```{r validation-phbudi_any}
+```{r validation-sir_table}
 
-agent <- pointblank::create_agent(tbl = SIR_table) |>
-  pointblank::col_vals_in_set(columns = phbudi_any,
-                              set = c(0, 1)) |>
-  pointblank::interrogate()
+sir_table <-
+  data.table::fread("data/SIR_table_for_VfM_linked.csv")
 
-pointblank::get_agent_report(agent)
+sir_table <- sir_table[, .(client_random_id, n_jy, submoddt, phbudi_any)]
 
+report <- check_data_quality(sir_table, table_name = "SIR table")
+
+report <-
+  data.validator::validate(sir_table) |>
+  data.validator::validate_cols(assertr::in_set(c(0, 1)),
+                                phbudi_any,
+                                description = "phbudi_any is a binary categorical variable") |>
+  data.validator::add_results(report)
+
+print(report)
 ```
+
+
+# Geography matching
 
 Define a function to get the UTLA23 data from an official source and what I hope is a permanent link. Since our main table only has the utla23cd we need this to have any local authority names. 
 
@@ -148,15 +163,31 @@ Define a function to get the UTLA23 data from an official source and what I hope
 
 get_utla23_data <- function() {
 
-  uri <- "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/UTLA_APR_2023_UK_NC/FeatureServer/0/query?outFields=*&where=1%3D1&f=geojson"
+uri <- "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/UTLA_APR_2023_UK_NC/FeatureServer/0/query?outFields=*&where=1%3D1&f=geojson"
 
-  geo <- jsonlite::read_json(uri, simplifyVector = TRUE)
+geo <- jsonlite::read_json(uri, simplifyVector = TRUE)
 
-  geo <- data.table::as.data.table(geo[["features"]])
+geo <- data.table::as.data.table(geo[["features"]])
 
-  data.table::setnames(geo, tolower(gsub("properties\\.", "", names(geo))))
+data.table::setnames(geo, tolower(gsub("properties\\.", "", names(geo))))
 
-  geo[grep("^E", utla23cd, perl = TRUE), .(utla23cd, utla23nm)]
+geo[grep("^E", utla23cd, perl = TRUE), .(utla23cd, utla23nm)]
 
 }
+```
+## Data dictionary{#data-dictionary}
+```{r}
+dd <- get_data_dictionary()
+
+rgx <-
+  paste(c(colnames(sir_table),
+          colnames(main_table)),
+        collapse = "|")
+
+dd <-
+  dd[grep(pattern = rgx, x = column, perl = TRUE), ]
+
+data.table::setnames(dd, new = snakecase::to_sentence_case)
+
+gt::gt(dd)
 ```
