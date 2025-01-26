@@ -1,6 +1,6 @@
 ---
-title: "My Dual-Format Document"
-author: "Your Name"
+title: "Functions"
+author: "Sandy"
 date: "2025-01-23"
 format:
   html:
@@ -8,24 +8,13 @@ format:
     self-contained: true
     theme: darkly
     execute:
+      cache: true
       echo: true
       warning: true
       message: true
 ---
 
-
-
-
-
-
-```{r setup}
-
-## I need to load `data.table` here because operators like `.()` or `:=` can't
-## be accessed with `::` in the way e.g. `jsonlite::read_json()` can.
-
-library(data.table)
-
-```
+# Load data
 
 ```{r function-unzip_datafile}
 #! Function to unzip the datafile and inspect what we've got.
@@ -38,16 +27,308 @@ unzip_datafile <- function(zipfile = "RAND-LAB-dataset.zip")
   }
 ```
 
-```{r unzip-data}
-unzip_datafile()
-```
-There are three datasets:
+There are two relevant datasets:
 - `r list.files("data")[1]`, which I'll refer to as *main*, contains client IDs and characteristics.
 - `r list.files("data")[2]`, which I'll refer to as *sir*, contains date and details of sub-intevention reviews (SIRs), including whether or not the client was receiving LAB at the date of the SIR.
-- `r list.files("data")[3]`, which I'll refer to as *top*
 
-The data extract I'm using was initially created for a RAND commission, it came with a ;
-[@data-dictionary]. 
+The data extract I'm using was initially created for a RAND commission, it came with a  data dictionary (@tbl-dictionary).
+
+
+```{r function-load_main_data}
+load_main_data  <- function() { 
+  main_df <-
+    data.table::fread("data/K3anon_FullDataset_for_VfM.csv")
+
+  main_df <-
+    main_df[drug_grp == "Opiate", .(client_random_id, n_jy, utla23cd)]
+
+  return(main_df)
+}
+```
+
+```{r function-load_sir_data}
+load_sir_data  <- function() { 
+
+  sir_df <-
+    data.table::fread("data/SIR_table_for_VfM_linked.csv")
+
+  sir_df <- sir_df[, .(client_random_id, n_jy, submoddt, phbudi_any)]
+
+  return(sir_df)
+
+}
+
+```
+## Merge data
+
+Define a function to get the UTLA23 data from an official source and what I hope is a permanent link. Since our main table only has the utla23cd we need this to have any local authority names. 
+
+
+```{r function-get_utla23_data}
+
+get_utla23_data <- function() {
+
+  uri <- "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/UTLA_APR_2023_UK_NC/FeatureServer/0/query?outFields=*&where=1%3D1&f=geojson"
+
+  geo <- jsonlite::read_json(uri, simplifyVector = TRUE)
+
+  geo <- data.table::as.data.table(geo[["features"]])
+
+  data.table::setnames(geo, tolower(gsub("properties\\.", "", names(geo))))
+
+  geo <- geo[grep("^E", utla23cd, perl = TRUE), .(utla23cd, utla23nm)]
+
+  return(geo)
+
+}
+```
+Function to merge `main_df` with the utla23names
+
+```{r function-add_geo_to_main_df}
+
+add_geo_to_main_df <-
+  function(main, geo) {
+
+    df <- data.table::merge.data.table(main, geo, by = "utla23cd")
+
+    return(df)
+  }
+
+```
+
+Function to prepare and merge `main_df` and `sir_df` for analysis
+
+```{r function-create_final_df}
+
+create_final_df <-
+  function(sir_df, main_df) {
+
+    main_df <-
+      add_geo_to_main_df(main_df, get_utla23_data())
+
+    sir_df <-
+      sir_df[, .(client_random_id,
+        n_jy,
+        submoddt,
+        phbudi_any,
+        other_ost = data.table::fifelse(phbudi_any == 1, 0L, 1L)
+      )]
+
+    final_df <-
+      data.table::merge.data.table(sir_df, main_df, by = c("client_random_id", "n_jy"))
+
+    return(final_df)
+
+}
+```
+## Analyse data
+
+```{r function-calulate_lab_rate}
+calculate_lab_rate <-
+  function(dt, groups = "year") {
+
+    dt <-
+      dt[, .(
+        phbudi_any = sum(phbudi_any),
+        other_ost = sum(other_ost)
+      ), by = groups]
+
+    dt[, lab_rate := phbudi_any / (phbudi_any + other_ost)]
+
+    return(dt)
+
+  }
+
+```
+
+```{r function-calculate_summary_stats}
+
+calculate_summary_stats <- function(dt, rate_col = "lab_rate", by_col = "year") {
+  get_quartile_range <- function(x, lower_q, upper_q = NULL) {
+    if (is.null(upper_q)) {
+      bounds <- x > quantile(x, lower_q)
+    } else {
+      bounds <- x > quantile(x, lower_q) & x <= quantile(x, upper_q)
+    }
+    c(min = min(x[bounds]), max = max(x[bounds]))
+  }
+ 
+  dt[, {
+    quartiles <- quantile(get(rate_col), c(0.25, 0.5, 0.75))
+   
+    # Create the summary list
+    list(
+      mean = mean(get(rate_col)),
+      IQR = IQR(get(rate_col)),
+      min = min(get(rate_col)),
+      q1 = quartiles[1],
+      median = quartiles[2],
+      q3 = quartiles[3],
+      max = max(get(rate_col)),
+     
+     # Calculate ranges for each quartile
+      setNames(
+        c(get_quartile_range(get(rate_col), 0, 0.25),      # Q1
+          get_quartile_range(get(rate_col), 0.25, 0.5),    # Q2
+          get_quartile_range(get(rate_col), 0.5, 0.75),    # Q3
+          get_quartile_range(get(rate_col), 0.75)),        # Q4
+        c("q1_min", "q1_max", "q2_min", "q2_max", 
+          "q3_min", "q3_max", "q4_min", "q4_max")
+      )
+    )
+  }, by = by_col]
+}
+```
+
+
+## Plotting functions
+
+```{r function-plot_lab_count}
+
+#| label: function-plot_lab_count
+plot_lab_count <- function(dt, fill_var = NULL) {
+  afcharts::use_afcharts()
+
+  p <- dt |>
+    ggplot2::ggplot(aes(x = year, y = phbudi_any)) +
+    ggplot2::geom_col(aes(fill = if(!is.null(fill_var)) get(fill_var))) +
+    ggplot2::scale_y_continuous(labels = scales::comma) +
+    ggplot2::labs(
+      x = NULL,
+      y = NULL
+    ) +
+    ggplot2::theme(
+      legend.position = if(is.null(fill_var)) "none" else "right",
+      plot.title.position = "plot"
+    )
+  
+  return(p)
+}
+```
+
+```{r function-plot_lab_rate}
+
+#| label: function-plot_lab_rate
+plot_lab_rate <- function(dt, fill_var = NULL) {
+
+  afcharts::use_afcharts()
+
+  p <- dt |>
+    ggplot2::ggplot(aes(x = year, y = lab_rate)) +
+    ggplot2::geom_col(aes(fill = if(!is.null(fill_var)) get(fill_var))) +
+    ggplot2::scale_y_continuous(labels = scales::percent) +
+    ggplot2::labs(
+      x = NULL,
+      y = NULL
+    ) +
+    ggplot2::theme(
+      legend.position = if(is.null(fill_var)) "none" else "right",
+      plot.title.position = "plot"
+    )
+ 
+  return(p)
+}
+```
+
+```{r}
+#| label: function-create_summary_table
+create_summary_table <- function(summary_stats) {
+  formatted_stats <- summary_stats[, .(
+    Year = year,
+    `Q1 Range` = sprintf("%.1f%% - %.1f%%",
+                         q1_min * 100, q1_max * 100),
+    `Q2 Range` = sprintf("%.1f%% - %.1f%%", 
+                         q2_min * 100, q2_max * 100),
+    `Q3 Range` = sprintf("%.1f%% - %.1f%%", 
+                         q3_min * 100, q3_max * 100),
+    `Q4 Range` = sprintf("%.1f%% - %.1f%%", 
+                         q4_min * 100, q4_max * 100),
+    `Overall IQR` = sprintf("%.1f%% - %.1f%%", 
+                            q1 * 100, q3 * 100)
+  )]
+
+  gt_table <- gt::gt(formatted_stats) |>
+    gt::tab_header(
+      title = "LAB Treatment Rates by Quartile"
+    ) |>
+    gt::fmt_percent(
+      columns = c(`Q1 Range`, `Q2 Range`, `Q3 Range`, `Q4 Range`, `Overall IQR`),
+      decimals = 1
+   )
+  
+  return(gt_table)
+}
+```
+
+## Validation
+
+```{r function-validate_merges}
+#| label: function-validate_merges
+validate_merges <- function(sir_df, main_df, final_df) {
+   
+  # Check we haven't lost or gained any people through the merges
+   
+  initial_count <- main_df[, length(unique(client_random_id))]
+
+  final_count <- final_df[, length(unique(client_random_id))]
+
+  
+  assertthat::assert_that(
+    final_count <= initial_count,
+    msg = "More ids after merge than before - check for duplicates"
+  )
+  
+  # Check geography mapping is complete
+  assertthat::assert_that(
+    all(!is.na(final_df$utla23nm)),
+    msg = "Missing UTLA names after geography merge"
+  )
+}
+
+```
+
+```{r function-validate_aggregation}
+#| label: function-validate_aggregation
+validate_aggregation <- function(final_df, aggregated_df) {
+  # Total LAB treatments should match before and after aggregation
+  total_lab_pre <- final_df[, sum(phbudi_any)]
+  total_lab_post <- aggregated_df[, sum(phbudi_any)]
+  
+  assertthat::assert_that(
+    abs(total_lab_pre - total_lab_post) < 1e-10,
+    msg = "LAB totals don't match after aggregation"
+  )
+  
+  # Total people receiving any treatment should match
+  total_people_pre <- final_df[, .N]
+  total_people_post <- aggregated_df[, sum(phbudi_any + other_ost)]
+  
+  assertthat::assert_that(
+    abs(total_people_pre - total_people_post) < 1e-10,
+    msg = "Totals don't match after aggregation"
+  )
+}
+```
+
+```{r}
+#| label: function-validate_rate
+validate_rate <- function(df) {
+  # Check rates are between 0 and 1
+  assertthat::assert_that(
+    all(df$lab_rate >= 0 & df$lab_rate <= 1),
+    msg = "Invalid rates detected"
+  )
+  
+  # Verify rate calculation matches raw counts
+  df[, {
+    calculated_rate <- phbudi_any / (phbudi_any + other_ost)
+    assertthat::assert_that(
+      all(abs(calculated_rate - lab_rate) < 1e-10),
+      msg = "Rate calculations don't match raw counts"
+    )
+  }]
+}
+```
 
 ```{r function-get_data_dictionary}
 #'A function to extract the information about the three datasets we're
@@ -84,110 +365,22 @@ get_data_dictionary <-
   }
 ```
 
-## Data quality
+```{r function-render_data_dictionary}
+render_data_dictionary <-
+  function() {
+    dd <- get_data_dictionary()
 
-Define a quick validation function to check our datasets
+    rgx <-
+      paste(c(colnames(sir_df),
+              colnames(main_df)),
+            collapse = "|")
 
-```{r function-check_data_qualtiy}
+    dd <-
+      dd[grep(pattern = rgx, x = column, perl = TRUE), ]
 
+    data.table::setnames(dd, new = snakecase::to_sentence_case)
 
-check_data_quality <- function(df, table_name = NULL) {
-
-  report <-
-    data.validator::data_validation_report()
-
-  df |>
-    data.validator::validate(name = table_name) |>
-    data.validator::validate_rows(assertr::col_concat,
-                                  assertr::is_uniq,
-                                  dplyr::everything(),
-                                  description = "Duplication") |>
-    data.validator::validate_rows(assertr::num_row_NAs,
-                                  assertr::within_bounds(-1, 0),
-                                  client_random_id, 
-                                  description = "Missingness") |>
-    data.validator::add_results(report)
-
-  return(report)
+    gt::gt(dd)
 }
 
-
-
-```
-
-Load the *main* dataset and run the data quality check. For now we only need the first three columns: `client_random_id` and `n_jy` for merging, and utla23cd so we can summarise by area and tranche. 
-
-### Main table data validation
-```{r validation-main_table}
-#| cache: true
-main_table <-
-  data.table::fread("data/K3anon_FullDataset_for_VfM.csv")
-
-main_table <- main_table[, .(client_random_id, n_jy, utla23cd)]
-
-check_data_quality(main_table, table_name = "Main table")
-```
-
-### SIR table data validation
-
-Load the *sir* dataset and run the data quality check. For now we only need the first three columns: `client_random_id` and `n_jy` for merging,`submoddt` (the date of the SIR), `phbudi_any` (data dictionary: *Calculated field, if any of the depot buprenorphine sub-interventions are ticked*).
-
-We're going to add one additional check for `phbudi_any` to see if it conforms to the expected data type (*1 = Yes, 0 = No/Missing*).
-
-```{r validation-sir_table}
-
-sir_table <-
-  data.table::fread("data/SIR_table_for_VfM_linked.csv")
-
-sir_table <- sir_table[, .(client_random_id, n_jy, submoddt, phbudi_any)]
-
-report <- check_data_quality(sir_table, table_name = "SIR table")
-
-report <-
-  data.validator::validate(sir_table) |>
-  data.validator::validate_cols(assertr::in_set(c(0, 1)),
-                                phbudi_any,
-                                description = "phbudi_any is a binary categorical variable") |>
-  data.validator::add_results(report)
-
-print(report)
-```
-
-
-# Geography matching
-
-Define a function to get the UTLA23 data from an official source and what I hope is a permanent link. Since our main table only has the utla23cd we need this to have any local authority names. 
-
-
-```{r function-get_utla23_data}
-
-get_utla23_data <- function() {
-
-uri <- "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/UTLA_APR_2023_UK_NC/FeatureServer/0/query?outFields=*&where=1%3D1&f=geojson"
-
-geo <- jsonlite::read_json(uri, simplifyVector = TRUE)
-
-geo <- data.table::as.data.table(geo[["features"]])
-
-data.table::setnames(geo, tolower(gsub("properties\\.", "", names(geo))))
-
-geo[grep("^E", utla23cd, perl = TRUE), .(utla23cd, utla23nm)]
-
-}
-```
-## Data dictionary{#data-dictionary}
-```{r}
-dd <- get_data_dictionary()
-
-rgx <-
-  paste(c(colnames(sir_table),
-          colnames(main_table)),
-        collapse = "|")
-
-dd <-
-  dd[grep(pattern = rgx, x = column, perl = TRUE), ]
-
-data.table::setnames(dd, new = snakecase::to_sentence_case)
-
-gt::gt(dd)
 ```

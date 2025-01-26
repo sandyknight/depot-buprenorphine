@@ -1,0 +1,64 @@
+## Data quality
+
+Define a quick validation function to check our datasets
+
+```{r function-check_data_qualtiy}
+
+
+check_data_quality <- function(df, table_name = NULL) {
+
+  report <-
+    data.validator::data_validation_report()
+
+  df |>
+    data.validator::validate(name = table_name) |>
+    data.validator::validate_rows(assertr::col_concat,
+                                  assertr::is_uniq,
+                                  dplyr::everything(),
+                                  description = "Duplication") |>
+    data.validator::validate_rows(assertr::num_row_NAs,
+                                  assertr::within_bounds(-1, 0),
+                                  client_random_id, 
+                                  description = "Missingness") |>
+    data.validator::add_results(report)
+
+  return(report)
+}
+
+
+
+```
+
+Load the *main* dataset and run the data quality check. For now we only need the first three columns: `client_random_id` and `n_jy` for merging, and utla23cd so we can summarise by area and tranche. 
+
+## Main table data validation
+```{r dataquality-main_df}
+
+main_df <- load_main_data()
+
+main_df <- main_df[, .(client_random_id, n_jy, utla23cd)]
+
+check_data_quality(main_df, table_name = "Main table")
+```
+
+## SIR table data validation
+
+Load the *sir* dataset and run the data quality check. For now we only need the first three columns: `client_random_id` and `n_jy` for merging,`submoddt` (the date of the SIR), `phbudi_any` (data dictionary: *Calculated field, if any of the depot buprenorphine sub-interventions are ticked*).
+
+We're going to add one additional check for `phbudi_any` to see if it conforms to the expected data type (*1 = Yes, 0 = No/Missing*).
+
+```{r dataquality-sir_df}
+
+sir_df <- sir_df[, .(client_random_id, n_jy, submoddt, phbudi_any)]
+
+report <- check_data_quality(sir_df, table_name = "SIR table")
+
+report <-
+  data.validator::validate(sir_df) |>
+  data.validator::validate_cols(assertr::in_set(c(0, 1)),
+                                phbudi_any,
+                                description = "phbudi_any is a binary categorical variable") |>
+  data.validator::add_results(report)
+
+gt::gt(report)
+```

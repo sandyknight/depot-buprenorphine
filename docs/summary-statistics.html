@@ -6,10 +6,10 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="author" content="Your Name">
+<meta name="author" content="Sandy">
 <meta name="dcterms.date" content="2025-01-23">
 
-<title>My Dual-Format Document</title>
+<title>Functions</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -3089,14 +3089,12 @@ vertical-align: -.125em;
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#data-quality" id="toc-data-quality" class="nav-link active" data-scroll-target="#data-quality">Data quality</a>
+  <li><a href="#load-data" id="toc-load-data" class="nav-link active" data-scroll-target="#load-data">Load data</a>
   <ul class="collapse">
-  <li><a href="#main-table-data-validation" id="toc-main-table-data-validation" class="nav-link" data-scroll-target="#main-table-data-validation">Main table data validation</a></li>
-  <li><a href="#sir-table-data-validation" id="toc-sir-table-data-validation" class="nav-link" data-scroll-target="#sir-table-data-validation">SIR table data validation</a></li>
-  </ul></li>
-  <li><a href="#geography-matching" id="toc-geography-matching" class="nav-link" data-scroll-target="#geography-matching">Geography matching</a>
-  <ul class="collapse">
-  <li><a href="#data-dictionary" id="toc-data-dictionary" class="nav-link" data-scroll-target="#data-dictionary">Data dictionary</a></li>
+  <li><a href="#merge-data" id="toc-merge-data" class="nav-link" data-scroll-target="#merge-data">Merge data</a></li>
+  <li><a href="#analyse-data" id="toc-analyse-data" class="nav-link" data-scroll-target="#analyse-data">Analyse data</a></li>
+  <li><a href="#plotting-functions" id="toc-plotting-functions" class="nav-link" data-scroll-target="#plotting-functions">Plotting functions</a></li>
+  <li><a href="#validation" id="toc-validation" class="nav-link" data-scroll-target="#validation">Validation</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -3105,7 +3103,7 @@ vertical-align: -.125em;
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">My Dual-Format Document</h1>
+<h1 class="title">Functions</h1>
 </div>
 
 
@@ -3115,7 +3113,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Author</div>
     <div class="quarto-title-meta-contents">
-             <p>Your Name </p>
+             <p>Sandy </p>
           </div>
   </div>
     
@@ -3134,664 +3132,341 @@ vertical-align: -.125em;
 </header>
 
 
+<section id="load-data" class="level1">
+<h1>Load data</h1>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="do">## I need to load `data.table` here because operators like `.()` or `:=` can&#39;t</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="do">## be accessed with `::` in the way e.g. `jsonlite::read_json()` can.</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(data.table)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">#! Function to unzip the datafile and inspect what we&#39;ve got.</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>unzip_datafile <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">zipfile =</span> <span class="st">&quot;RAND-LAB-dataset.zip&quot;</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(<span class="st">&quot;data/K3anon_FullDataset_for_VfM.csv&quot;</span>)) {</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unzip</span>(<span class="fu">file.path</span>(<span class="st">&quot;data&quot;</span>, zipfile), <span class="at">exdir =</span> <span class="st">&quot;data&quot;</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">list.files</span>(<span class="st">&quot;data/&quot;</span>, <span class="at">pattern =</span> <span class="st">&quot;</span><span class="sc">\\</span><span class="st">.csv&quot;</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">list.files</span>(<span class="st">&quot;data/&quot;</span>, <span class="at">pattern =</span> <span class="st">&quot;</span><span class="sc">\\</span><span class="st">.csv&quot;</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  }</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>There are two relevant datasets: - data-dictionary.csv, which I’ll refer to as <em>main</em>, contains client IDs and characteristics. - K3anon_FullDataset_for_VfM.csv, which I’ll refer to as <em>sir</em>, contains date and details of sub-intevention reviews (SIRs), including whether or not the client was receiving LAB at the date of the SIR.</p>
+<p>The data extract I’m using was initially created for a RAND commission, it came with a data dictionary (<strong>?@tbl-dictionary</strong>).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>load_main_data  <span class="ot">&lt;-</span> <span class="cf">function</span>() { </span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  main_df <span class="ot">&lt;-</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    data.table<span class="sc">::</span><span class="fu">fread</span>(<span class="st">&quot;data/K3anon_FullDataset_for_VfM.csv&quot;</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  main_df <span class="ot">&lt;-</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    main_df[drug_grp <span class="sc">==</span> <span class="st">&quot;Opiate&quot;</span>, .(client_random_id, n_jy, utla23cd)]</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(main_df)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">#! Function to unzip the datafile and inspect what we&#39;ve got.</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>unzip_datafile <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">zipfile =</span> <span class="st">&quot;RAND-LAB-dataset.zip&quot;</span>)</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(<span class="st">&quot;data/K3anon_FullDataset_for_VfM.csv&quot;</span>)) {</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unzip</span>(<span class="fu">file.path</span>(<span class="st">&quot;data&quot;</span>, zipfile), <span class="at">exdir =</span> <span class="st">&quot;data&quot;</span>)</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">list.files</span>(<span class="st">&quot;data/&quot;</span>, <span class="at">pattern =</span> <span class="st">&quot;</span><span class="sc">\\</span><span class="st">.csv&quot;</span>)</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">list.files</span>(<span class="st">&quot;data/&quot;</span>, <span class="at">pattern =</span> <span class="st">&quot;</span><span class="sc">\\</span><span class="st">.csv&quot;</span>)</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  }</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>load_sir_data  <span class="ot">&lt;-</span> <span class="cf">function</span>() { </span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  sir_df <span class="ot">&lt;-</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    data.table<span class="sc">::</span><span class="fu">fread</span>(<span class="st">&quot;data/SIR_table_for_VfM_linked.csv&quot;</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  sir_df <span class="ot">&lt;-</span> sir_df[, .(client_random_id, n_jy, submoddt, phbudi_any)]</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(sir_df)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">unzip_datafile</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] &quot;data-dictionary.csv&quot;            &quot;K3anon_FullDataset_for_VfM.csv&quot;
-[3] &quot;SIR_table_for_VfM_linked.csv&quot;   &quot;TOP_table_for_VfM_linked.csv&quot;  </code></pre>
-</div>
-</div>
-<p>There are three datasets: - data-dictionary.csv, which I’ll refer to as <em>main</em>, contains client IDs and characteristics. - K3anon_FullDataset_for_VfM.csv, which I’ll refer to as <em>sir</em>, contains date and details of sub-intevention reviews (SIRs), including whether or not the client was receiving LAB at the date of the SIR. - RAND-data-dictionary.xlsx, which I’ll refer to as <em>top</em></p>
-<p>The data extract I’m using was initially created for a RAND commission, it came with a ; <span class="citation" data-cites="data-dictionary">[@data-dictionary]</span>.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">#&#39;A function to extract the information about the three datasets we&#39;re</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&#39; interested in and combine it into one CSV file.</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>get_data_dictionary <span class="ot">&lt;-</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">function</span>(<span class="at">dictionary_xlsx =</span> <span class="st">&quot;data/RAND-data-dictionary.xlsx&quot;</span>) {</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">file.exists</span>(<span class="st">&quot;data/data-dictionary.csv&quot;</span>)) {</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>      <span class="fu">return</span>(data.table<span class="sc">::</span><span class="fu">fread</span>(<span class="st">&quot;data/data-dictionary.csv&quot;</span>))</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    dd_main <span class="ot">&lt;-</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>      openxlsx<span class="sc">::</span><span class="fu">read.xlsx</span>(<span class="at">xlsxFile =</span> <span class="st">&quot;data/RAND-data-dictionary.xlsx&quot;</span>,</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>                          <span class="at">sheet =</span> <span class="st">&quot;Main table - journeys&quot;</span>,</span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>                          <span class="at">cols =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">4</span><span class="sc">:</span><span class="dv">6</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>      janitor<span class="sc">::</span><span class="fu">clean_names</span>() <span class="sc">|&gt;</span></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">rename</span>(<span class="st">&quot;column&quot;</span> <span class="ot">=</span> column_name)</span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    dd_sir <span class="ot">&lt;-</span></span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>      openxlsx<span class="sc">::</span><span class="fu">read.xlsx</span>(<span class="at">xlsxFile =</span> <span class="st">&quot;data/RAND-data-dictionary.xlsx&quot;</span>,</span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>                          <span class="at">sheet =</span> <span class="st">&quot;SIR table&quot;</span>,</span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>                          <span class="at">cols =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>      janitor<span class="sc">::</span><span class="fu">clean_names</span>()</span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>    dd_top <span class="ot">&lt;-</span></span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>      openxlsx<span class="sc">::</span><span class="fu">read.xlsx</span>(<span class="at">xlsxFile =</span> <span class="st">&quot;data/RAND-data-dictionary.xlsx&quot;</span>,</span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>                          <span class="at">sheet =</span> <span class="st">&quot;TOP table&quot;</span>,</span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>                          <span class="at">cols =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>      janitor<span class="sc">::</span><span class="fu">clean_names</span>()</span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>    data_dictionary <span class="ot">&lt;-</span> data.table<span class="sc">::</span><span class="fu">rbindlist</span>(<span class="at">l =</span> <span class="fu">list</span>(dd_main, dd_sir, dd_top))</span>
-<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>    data.table<span class="sc">::</span><span class="fu">fwrite</span>(data_dictionary, <span class="st">&quot;data/data-dictionary.csv&quot;</span>)</span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>    data_dictionary</span>
-<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>  }</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<section id="data-quality" class="level2">
-<h2 class="anchored" data-anchor-id="data-quality">Data quality</h2>
-<p>Define a quick validation function to check our datasets</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>check_data_quality <span class="ot">&lt;-</span> <span class="cf">function</span>(df, <span class="at">table_name =</span> <span class="cn">NULL</span>) {</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  report <span class="ot">&lt;-</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    data.validator<span class="sc">::</span><span class="fu">data_validation_report</span>()</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  df <span class="sc">|&gt;</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    data.validator<span class="sc">::</span><span class="fu">validate</span>(<span class="at">name =</span> table_name) <span class="sc">|&gt;</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    data.validator<span class="sc">::</span><span class="fu">validate_rows</span>(assertr<span class="sc">::</span>col_concat,</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>                                  assertr<span class="sc">::</span>is_uniq,</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>                                  dplyr<span class="sc">::</span><span class="fu">everything</span>(),</span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">description =</span> <span class="st">&quot;Duplication&quot;</span>) <span class="sc">|&gt;</span></span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    data.validator<span class="sc">::</span><span class="fu">validate_rows</span>(assertr<span class="sc">::</span>num_row_NAs,</span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>                                  assertr<span class="sc">::</span><span class="fu">within_bounds</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">0</span>),</span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>                                  client_random_id, </span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">description =</span> <span class="st">&quot;Missingness&quot;</span>) <span class="sc">|&gt;</span></span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    data.validator<span class="sc">::</span><span class="fu">add_results</span>(report)</span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(report)</span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>Load the <em>main</em> dataset and run the data quality check. For now we only need the first three columns: <code>client_random_id</code> and <code>n_jy</code> for merging, and utla23cd so we can summarise by area and tranche.</p>
-<section id="main-table-data-validation" class="level3">
-<h3 class="anchored" data-anchor-id="main-table-data-validation">Main table data validation</h3>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>main_table <span class="ot">&lt;-</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  data.table<span class="sc">::</span><span class="fu">fread</span>(<span class="st">&quot;data/K3anon_FullDataset_for_VfM.csv&quot;</span>)</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>main_table <span class="ot">&lt;-</span> main_table[, .(client_random_id, n_jy, utla23cd)]</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="fu">check_data_quality</span>(main_table, <span class="at">table_name =</span> <span class="st">&quot;Main table&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Validation summary: 
- Number of successful validations: 2
- Number of validations with warnings: 0
- Number of failed validations: 0
-
-Advanced view: 
-
-
-|table_name |description |type    | total_violations|
-|:----------|:-----------|:-------|----------------:|
-|Main table |Duplication |success |               NA|
-|Main table |Missingness |success |               NA|</code></pre>
-</div>
-</div>
-</section>
-<section id="sir-table-data-validation" class="level3">
-<h3 class="anchored" data-anchor-id="sir-table-data-validation">SIR table data validation</h3>
-<p>Load the <em>sir</em> dataset and run the data quality check. For now we only need the first three columns: <code>client_random_id</code> and <code>n_jy</code> for merging,<code>submoddt</code> (the date of the SIR), <code>phbudi_any</code> (data dictionary: <em>Calculated field, if any of the depot buprenorphine sub-interventions are ticked</em>).</p>
-<p>We’re going to add one additional check for <code>phbudi_any</code> to see if it conforms to the expected data type (<em>1 = Yes, 0 = No/Missing</em>).</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>sir_table <span class="ot">&lt;-</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  data.table<span class="sc">::</span><span class="fu">fread</span>(<span class="st">&quot;data/SIR_table_for_VfM_linked.csv&quot;</span>)</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>sir_table <span class="ot">&lt;-</span> sir_table[, .(client_random_id, n_jy, submoddt, phbudi_any)]</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>report <span class="ot">&lt;-</span> <span class="fu">check_data_quality</span>(sir_table, <span class="at">table_name =</span> <span class="st">&quot;SIR table&quot;</span>)</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>report <span class="ot">&lt;-</span></span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  data.validator<span class="sc">::</span><span class="fu">validate</span>(sir_table) <span class="sc">|&gt;</span></span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  data.validator<span class="sc">::</span><span class="fu">validate_cols</span>(assertr<span class="sc">::</span><span class="fu">in_set</span>(<span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>)),</span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>                                phbudi_any,</span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>                                <span class="at">description =</span> <span class="st">&quot;phbudi_any is a binary categorical variable&quot;</span>) <span class="sc">|&gt;</span></span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  data.validator<span class="sc">::</span><span class="fu">add_results</span>(report)</span>
-<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(report)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>         client_random_id  n_jy   submoddt phbudi_any
-                    &lt;int&gt; &lt;int&gt;     &lt;IDat&gt;      &lt;int&gt;
-      1:                6     2 2023-08-01          0
-      2:                7     5 2021-06-01          0
-      3:                7     5 2021-08-01          0
-      4:                7     5 2021-12-01          0
-      5:                7     5 2022-03-01          0
-     ---                                             
-2796562:           571821     2 2023-06-01          0
-2796563:           571821     2 2023-09-01          0
-2796564:           571821     2 2024-01-01          0
-2796565:           571821     2 2024-06-01          0
-2796566:           571821     2 2024-07-01          0</code></pre>
-</div>
-</div>
-</section>
-</section>
-<section id="geography-matching" class="level1">
-<h1>Geography matching</h1>
+<section id="merge-data" class="level2">
+<h2 class="anchored" data-anchor-id="merge-data">Merge data</h2>
 <p>Define a function to get the UTLA23 data from an official source and what I hope is a permanent link. Since our main table only has the utla23cd we need this to have any local authority names.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>get_utla23_data <span class="ot">&lt;-</span> <span class="cf">function</span>() {</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>uri <span class="ot">&lt;-</span> <span class="st">&quot;https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/UTLA_APR_2023_UK_NC/FeatureServer/0/query?outFields=*&amp;where=1%3D1&amp;f=geojson&quot;</span></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>geo <span class="ot">&lt;-</span> jsonlite<span class="sc">::</span><span class="fu">read_json</span>(uri, <span class="at">simplifyVector =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>geo <span class="ot">&lt;-</span> data.table<span class="sc">::</span><span class="fu">as.data.table</span>(geo[[<span class="st">&quot;features&quot;</span>]])</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>data.table<span class="sc">::</span><span class="fu">setnames</span>(geo, <span class="fu">tolower</span>(<span class="fu">gsub</span>(<span class="st">&quot;properties</span><span class="sc">\\</span><span class="st">.&quot;</span>, <span class="st">&quot;&quot;</span>, <span class="fu">names</span>(geo))))</span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>geo[<span class="fu">grep</span>(<span class="st">&quot;^E&quot;</span>, utla23cd, <span class="at">perl =</span> <span class="cn">TRUE</span>), .(utla23cd, utla23nm)]</span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>get_utla23_data <span class="ot">&lt;-</span> <span class="cf">function</span>() {</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  uri <span class="ot">&lt;-</span> <span class="st">&quot;https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/UTLA_APR_2023_UK_NC/FeatureServer/0/query?outFields=*&amp;where=1%3D1&amp;f=geojson&quot;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  geo <span class="ot">&lt;-</span> jsonlite<span class="sc">::</span><span class="fu">read_json</span>(uri, <span class="at">simplifyVector =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  geo <span class="ot">&lt;-</span> data.table<span class="sc">::</span><span class="fu">as.data.table</span>(geo[[<span class="st">&quot;features&quot;</span>]])</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  data.table<span class="sc">::</span><span class="fu">setnames</span>(geo, <span class="fu">tolower</span>(<span class="fu">gsub</span>(<span class="st">&quot;properties</span><span class="sc">\\</span><span class="st">.&quot;</span>, <span class="st">&quot;&quot;</span>, <span class="fu">names</span>(geo))))</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  geo <span class="ot">&lt;-</span> geo[<span class="fu">grep</span>(<span class="st">&quot;^E&quot;</span>, utla23cd, <span class="at">perl =</span> <span class="cn">TRUE</span>), .(utla23cd, utla23nm)]</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(geo)</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<section id="data-dictionary" class="level2">
-<h2 class="anchored" data-anchor-id="data-dictionary">Data dictionary</h2>
+<p>Function to merge <code>main_df</code> with the utla23names</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>dd <span class="ot">&lt;-</span> <span class="fu">get_data_dictionary</span>()</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>rgx <span class="ot">&lt;-</span></span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">paste</span>(<span class="fu">c</span>(<span class="fu">colnames</span>(sir_table),</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>          <span class="fu">colnames</span>(main_table)),</span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">collapse =</span> <span class="st">&quot;|&quot;</span>)</span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>dd <span class="ot">&lt;-</span></span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>  dd[<span class="fu">grep</span>(<span class="at">pattern =</span> rgx, <span class="at">x =</span> column, <span class="at">perl =</span> <span class="cn">TRUE</span>), ]</span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>data.table<span class="sc">::</span><span class="fu">setnames</span>(dd, <span class="at">new =</span> snakecase<span class="sc">::</span>to_sentence_case)</span>
-<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>gt<span class="sc">::</span><span class="fu">gt</span>(dd)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<div id="xrwuuuedut" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#xrwuuuedut table {
-font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
--webkit-font-smoothing: antialiased;
--moz-osx-font-smoothing: grayscale;
-}
-#xrwuuuedut thead, #xrwuuuedut tbody, #xrwuuuedut tfoot, #xrwuuuedut tr, #xrwuuuedut td, #xrwuuuedut th {
-border-style: none;
-}
-#xrwuuuedut p {
-margin: 0;
-padding: 0;
-}
-#xrwuuuedut .gt_table {
-display: table;
-border-collapse: collapse;
-line-height: normal;
-margin-left: auto;
-margin-right: auto;
-color: #333333;
-font-size: 16px;
-font-weight: normal;
-font-style: normal;
-background-color: #FFFFFF;
-width: auto;
-border-top-style: solid;
-border-top-width: 2px;
-border-top-color: #A8A8A8;
-border-right-style: none;
-border-right-width: 2px;
-border-right-color: #D3D3D3;
-border-bottom-style: solid;
-border-bottom-width: 2px;
-border-bottom-color: #A8A8A8;
-border-left-style: none;
-border-left-width: 2px;
-border-left-color: #D3D3D3;
-}
-#xrwuuuedut .gt_caption {
-padding-top: 4px;
-padding-bottom: 4px;
-}
-#xrwuuuedut .gt_title {
-color: #333333;
-font-size: 125%;
-font-weight: initial;
-padding-top: 4px;
-padding-bottom: 4px;
-padding-left: 5px;
-padding-right: 5px;
-border-bottom-color: #FFFFFF;
-border-bottom-width: 0;
-}
-#xrwuuuedut .gt_subtitle {
-color: #333333;
-font-size: 85%;
-font-weight: initial;
-padding-top: 3px;
-padding-bottom: 5px;
-padding-left: 5px;
-padding-right: 5px;
-border-top-color: #FFFFFF;
-border-top-width: 0;
-}
-#xrwuuuedut .gt_heading {
-background-color: #FFFFFF;
-text-align: center;
-border-bottom-color: #FFFFFF;
-border-left-style: none;
-border-left-width: 1px;
-border-left-color: #D3D3D3;
-border-right-style: none;
-border-right-width: 1px;
-border-right-color: #D3D3D3;
-}
-#xrwuuuedut .gt_bottom_border {
-border-bottom-style: solid;
-border-bottom-width: 2px;
-border-bottom-color: #D3D3D3;
-}
-#xrwuuuedut .gt_col_headings {
-border-top-style: solid;
-border-top-width: 2px;
-border-top-color: #D3D3D3;
-border-bottom-style: solid;
-border-bottom-width: 2px;
-border-bottom-color: #D3D3D3;
-border-left-style: none;
-border-left-width: 1px;
-border-left-color: #D3D3D3;
-border-right-style: none;
-border-right-width: 1px;
-border-right-color: #D3D3D3;
-}
-#xrwuuuedut .gt_col_heading {
-color: #333333;
-background-color: #FFFFFF;
-font-size: 100%;
-font-weight: normal;
-text-transform: inherit;
-border-left-style: none;
-border-left-width: 1px;
-border-left-color: #D3D3D3;
-border-right-style: none;
-border-right-width: 1px;
-border-right-color: #D3D3D3;
-vertical-align: bottom;
-padding-top: 5px;
-padding-bottom: 6px;
-padding-left: 5px;
-padding-right: 5px;
-overflow-x: hidden;
-}
-#xrwuuuedut .gt_column_spanner_outer {
-color: #333333;
-background-color: #FFFFFF;
-font-size: 100%;
-font-weight: normal;
-text-transform: inherit;
-padding-top: 0;
-padding-bottom: 0;
-padding-left: 4px;
-padding-right: 4px;
-}
-#xrwuuuedut .gt_column_spanner_outer:first-child {
-padding-left: 0;
-}
-#xrwuuuedut .gt_column_spanner_outer:last-child {
-padding-right: 0;
-}
-#xrwuuuedut .gt_column_spanner {
-border-bottom-style: solid;
-border-bottom-width: 2px;
-border-bottom-color: #D3D3D3;
-vertical-align: bottom;
-padding-top: 5px;
-padding-bottom: 5px;
-overflow-x: hidden;
-display: inline-block;
-width: 100%;
-}
-#xrwuuuedut .gt_spanner_row {
-border-bottom-style: hidden;
-}
-#xrwuuuedut .gt_group_heading {
-padding-top: 8px;
-padding-bottom: 8px;
-padding-left: 5px;
-padding-right: 5px;
-color: #333333;
-background-color: #FFFFFF;
-font-size: 100%;
-font-weight: initial;
-text-transform: inherit;
-border-top-style: solid;
-border-top-width: 2px;
-border-top-color: #D3D3D3;
-border-bottom-style: solid;
-border-bottom-width: 2px;
-border-bottom-color: #D3D3D3;
-border-left-style: none;
-border-left-width: 1px;
-border-left-color: #D3D3D3;
-border-right-style: none;
-border-right-width: 1px;
-border-right-color: #D3D3D3;
-vertical-align: middle;
-text-align: left;
-}
-#xrwuuuedut .gt_empty_group_heading {
-padding: 0.5px;
-color: #333333;
-background-color: #FFFFFF;
-font-size: 100%;
-font-weight: initial;
-border-top-style: solid;
-border-top-width: 2px;
-border-top-color: #D3D3D3;
-border-bottom-style: solid;
-border-bottom-width: 2px;
-border-bottom-color: #D3D3D3;
-vertical-align: middle;
-}
-#xrwuuuedut .gt_from_md > :first-child {
-margin-top: 0;
-}
-#xrwuuuedut .gt_from_md > :last-child {
-margin-bottom: 0;
-}
-#xrwuuuedut .gt_row {
-padding-top: 8px;
-padding-bottom: 8px;
-padding-left: 5px;
-padding-right: 5px;
-margin: 10px;
-border-top-style: solid;
-border-top-width: 1px;
-border-top-color: #D3D3D3;
-border-left-style: none;
-border-left-width: 1px;
-border-left-color: #D3D3D3;
-border-right-style: none;
-border-right-width: 1px;
-border-right-color: #D3D3D3;
-vertical-align: middle;
-overflow-x: hidden;
-}
-#xrwuuuedut .gt_stub {
-color: #333333;
-background-color: #FFFFFF;
-font-size: 100%;
-font-weight: initial;
-text-transform: inherit;
-border-right-style: solid;
-border-right-width: 2px;
-border-right-color: #D3D3D3;
-padding-left: 5px;
-padding-right: 5px;
-}
-#xrwuuuedut .gt_stub_row_group {
-color: #333333;
-background-color: #FFFFFF;
-font-size: 100%;
-font-weight: initial;
-text-transform: inherit;
-border-right-style: solid;
-border-right-width: 2px;
-border-right-color: #D3D3D3;
-padding-left: 5px;
-padding-right: 5px;
-vertical-align: top;
-}
-#xrwuuuedut .gt_row_group_first td {
-border-top-width: 2px;
-}
-#xrwuuuedut .gt_row_group_first th {
-border-top-width: 2px;
-}
-#xrwuuuedut .gt_summary_row {
-color: #333333;
-background-color: #FFFFFF;
-text-transform: inherit;
-padding-top: 8px;
-padding-bottom: 8px;
-padding-left: 5px;
-padding-right: 5px;
-}
-#xrwuuuedut .gt_first_summary_row {
-border-top-style: solid;
-border-top-color: #D3D3D3;
-}
-#xrwuuuedut .gt_first_summary_row.thick {
-border-top-width: 2px;
-}
-#xrwuuuedut .gt_last_summary_row {
-padding-top: 8px;
-padding-bottom: 8px;
-padding-left: 5px;
-padding-right: 5px;
-border-bottom-style: solid;
-border-bottom-width: 2px;
-border-bottom-color: #D3D3D3;
-}
-#xrwuuuedut .gt_grand_summary_row {
-color: #333333;
-background-color: #FFFFFF;
-text-transform: inherit;
-padding-top: 8px;
-padding-bottom: 8px;
-padding-left: 5px;
-padding-right: 5px;
-}
-#xrwuuuedut .gt_first_grand_summary_row {
-padding-top: 8px;
-padding-bottom: 8px;
-padding-left: 5px;
-padding-right: 5px;
-border-top-style: double;
-border-top-width: 6px;
-border-top-color: #D3D3D3;
-}
-#xrwuuuedut .gt_last_grand_summary_row_top {
-padding-top: 8px;
-padding-bottom: 8px;
-padding-left: 5px;
-padding-right: 5px;
-border-bottom-style: double;
-border-bottom-width: 6px;
-border-bottom-color: #D3D3D3;
-}
-#xrwuuuedut .gt_striped {
-background-color: rgba(128, 128, 128, 0.05);
-}
-#xrwuuuedut .gt_table_body {
-border-top-style: solid;
-border-top-width: 2px;
-border-top-color: #D3D3D3;
-border-bottom-style: solid;
-border-bottom-width: 2px;
-border-bottom-color: #D3D3D3;
-}
-#xrwuuuedut .gt_footnotes {
-color: #333333;
-background-color: #FFFFFF;
-border-bottom-style: none;
-border-bottom-width: 2px;
-border-bottom-color: #D3D3D3;
-border-left-style: none;
-border-left-width: 2px;
-border-left-color: #D3D3D3;
-border-right-style: none;
-border-right-width: 2px;
-border-right-color: #D3D3D3;
-}
-#xrwuuuedut .gt_footnote {
-margin: 0px;
-font-size: 90%;
-padding-top: 4px;
-padding-bottom: 4px;
-padding-left: 5px;
-padding-right: 5px;
-}
-#xrwuuuedut .gt_sourcenotes {
-color: #333333;
-background-color: #FFFFFF;
-border-bottom-style: none;
-border-bottom-width: 2px;
-border-bottom-color: #D3D3D3;
-border-left-style: none;
-border-left-width: 2px;
-border-left-color: #D3D3D3;
-border-right-style: none;
-border-right-width: 2px;
-border-right-color: #D3D3D3;
-}
-#xrwuuuedut .gt_sourcenote {
-font-size: 90%;
-padding-top: 4px;
-padding-bottom: 4px;
-padding-left: 5px;
-padding-right: 5px;
-}
-#xrwuuuedut .gt_left {
-text-align: left;
-}
-#xrwuuuedut .gt_center {
-text-align: center;
-}
-#xrwuuuedut .gt_right {
-text-align: right;
-font-variant-numeric: tabular-nums;
-}
-#xrwuuuedut .gt_font_normal {
-font-weight: normal;
-}
-#xrwuuuedut .gt_font_bold {
-font-weight: bold;
-}
-#xrwuuuedut .gt_font_italic {
-font-style: italic;
-}
-#xrwuuuedut .gt_super {
-font-size: 65%;
-}
-#xrwuuuedut .gt_footnote_marks {
-font-size: 75%;
-vertical-align: 0.4em;
-position: initial;
-}
-#xrwuuuedut .gt_asterisk {
-font-size: 100%;
-vertical-align: 0;
-}
-#xrwuuuedut .gt_indent_1 {
-text-indent: 5px;
-}
-#xrwuuuedut .gt_indent_2 {
-text-indent: 10px;
-}
-#xrwuuuedut .gt_indent_3 {
-text-indent: 15px;
-}
-#xrwuuuedut .gt_indent_4 {
-text-indent: 20px;
-}
-#xrwuuuedut .gt_indent_5 {
-text-indent: 25px;
-}
-#xrwuuuedut .katex-display {
-display: inline-flex !important;
-margin-bottom: 0.75em !important;
-}
-#xrwuuuedut div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
-height: 0px !important;
-}
-</style>
-
-<table class="gt_table caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
-<thead>
-<tr class="gt_col_headings header">
-<th id="Table" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">Table</th>
-<th id="Column" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">Column</th>
-<th id="Description" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">Description</th>
-<th id="Value-notes" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">Value notes</th>
-<th id="General-notes" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">General notes</th>
-</tr>
-</thead>
-<tbody class="gt_table_body">
-<tr class="odd">
-<td class="gt_row gt_left" headers="Table">Main table</td>
-<td class="gt_row gt_left" headers="Column">client_random_id</td>
-<td class="gt_row gt_left" headers="Description">Identifier representing an individual (by initials, dob, sex, local authority). Individuals can have multiple journeys. Client_random_id and n_jy are also used to link tables.</td>
-<td class="gt_row gt_left" headers="Value notes">Random integer</td>
-<td class="gt_row gt_left" headers="General notes"></td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Table">Main table</td>
-<td class="gt_row gt_left" headers="Column">n_jy</td>
-<td class="gt_row gt_left" headers="Description">Journey number, ordered count of journeys for an individual (client_random_id), higher number is later. Client_random_id and n_jy are also used to link tables.</td>
-<td class="gt_row gt_left" headers="Value notes">Integer</td>
-<td class="gt_row gt_left" headers="General notes"></td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Table">Main table</td>
-<td class="gt_row gt_left" headers="Column">utla23cd</td>
-<td class="gt_row gt_left" headers="Description">Identifier representing an individual (by initials, dob, sex, local authority). Upper-tier local authority coding as per ONS revision April 2023</td>
-<td class="gt_row gt_left" headers="Value notes">See ONS data: https://geoportal.statistics.gov.uk/datasets/ons::upper-tier-local-authorities-april-2023-names-and-codes-in-the-uk/about NA = no data/suppressed by k-anon</td>
-<td class="gt_row gt_left" headers="General notes">1:1 with utla23nm. Isles of Scilly under Cornwall.</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Table">SIR table</td>
-<td class="gt_row gt_left" headers="Column">client_random_id</td>
-<td class="gt_row gt_left" headers="Description">Identifier representing an individual (by initials, dob, sex, local authority). Individuals can have multiple journeys. Client_random_id and n_jy are also used to link tables.</td>
-<td class="gt_row gt_left" headers="Value notes">Random integer</td>
-<td class="gt_row gt_left" headers="General notes"></td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Table">SIR table</td>
-<td class="gt_row gt_left" headers="Column">n_jy</td>
-<td class="gt_row gt_left" headers="Description">Journey number, ordered count of journeys for an individual (client_random_id), higher number is later. Client_random_id and n_jy are also used to link tables.</td>
-<td class="gt_row gt_left" headers="Value notes">Integer</td>
-<td class="gt_row gt_left" headers="General notes"></td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Table">SIR table</td>
-<td class="gt_row gt_left" headers="Column">submoddt</td>
-<td class="gt_row gt_left" headers="Description">Date of SIR</td>
-<td class="gt_row gt_left" headers="Value notes">Date collapsed to month.</td>
-<td class="gt_row gt_left" headers="General notes">SIR must be within journey or up to 6 months after</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Table">SIR table</td>
-<td class="gt_row gt_left" headers="Column">phbudi_any</td>
-<td class="gt_row gt_left" headers="Description">Calculated field, if any of the depot buprenorphine sub-interventions are ticked</td>
-<td class="gt_row gt_left" headers="Value notes">1 = Yes, 0 = No/Missing</td>
-<td class="gt_row gt_left" headers="General notes">Calculated field, if any of the depot buprenorphine sub-interventions are ticked</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Table">TOP table</td>
-<td class="gt_row gt_left" headers="Column">client_random_id</td>
-<td class="gt_row gt_left" headers="Description">Identifier representing an individual (by initials, dob, sex, local authority). Individuals can have multiple journeys. Client_random_id and n_jy are also used to link tables.</td>
-<td class="gt_row gt_left" headers="Value notes">Random integer</td>
-<td class="gt_row gt_left" headers="General notes"></td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Table">TOP table</td>
-<td class="gt_row gt_left" headers="Column">n_jy</td>
-<td class="gt_row gt_left" headers="Description">Journey number, ordered count of journeys for an individual (client_random_id), higher number is later. Client_random_id and n_jy are also used to link tables.</td>
-<td class="gt_row gt_left" headers="Value notes">Integer</td>
-<td class="gt_row gt_left" headers="General notes"></td>
-</tr>
-</tbody>
-</table>
-
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>add_geo_to_main_df <span class="ot">&lt;-</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">function</span>(main, geo) {</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    df <span class="ot">&lt;-</span> data.table<span class="sc">::</span><span class="fu">merge.data.table</span>(main, geo, <span class="at">by =</span> <span class="st">&quot;utla23cd&quot;</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(df)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  }</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<p>Function to prepare and merge <code>main_df</code> and <code>sir_df</code> for analysis</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>create_final_df <span class="ot">&lt;-</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">function</span>(sir_df, main_df) {</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    main_df <span class="ot">&lt;-</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>      <span class="fu">add_geo_to_main_df</span>(main_df, <span class="fu">get_utla23_data</span>())</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    sir_df <span class="ot">&lt;-</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>      sir_df[, .(client_random_id,</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>        n_jy,</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>        submoddt,</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>        phbudi_any,</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>        <span class="at">other_ost =</span> data.table<span class="sc">::</span><span class="fu">fifelse</span>(phbudi_any <span class="sc">==</span> <span class="dv">1</span>, <span class="dv">0</span>L, <span class="dv">1</span>L)</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>      )]</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    final_df <span class="ot">&lt;-</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>      data.table<span class="sc">::</span><span class="fu">merge.data.table</span>(sir_df, main_df, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">&quot;client_random_id&quot;</span>, <span class="st">&quot;n_jy&quot;</span>))</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(final_df)</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+</section>
+<section id="analyse-data" class="level2">
+<h2 class="anchored" data-anchor-id="analyse-data">Analyse data</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>calculate_lab_rate <span class="ot">&lt;-</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">function</span>(dt, <span class="at">groups =</span> <span class="st">&quot;year&quot;</span>) {</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    dt <span class="ot">&lt;-</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>      dt[, .(</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">phbudi_any =</span> <span class="fu">sum</span>(phbudi_any),</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">other_ost =</span> <span class="fu">sum</span>(other_ost)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>      ), by <span class="ot">=</span> groups]</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    dt[, lab_rate <span class="sc">:</span><span class="er">=</span> phbudi_any <span class="sc">/</span> (phbudi_any <span class="sc">+</span> other_ost)]</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(dt)</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>  }</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>calculate_summary_stats <span class="ot">&lt;-</span> <span class="cf">function</span>(dt, <span class="at">rate_col =</span> <span class="st">&quot;lab_rate&quot;</span>, <span class="at">by_col =</span> <span class="st">&quot;year&quot;</span>) {</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  get_quartile_range <span class="ot">&lt;-</span> <span class="cf">function</span>(x, lower_q, <span class="at">upper_q =</span> <span class="cn">NULL</span>) {</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">is.null</span>(upper_q)) {</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>      bounds <span class="ot">&lt;-</span> x <span class="sc">&gt;</span> <span class="fu">quantile</span>(x, lower_q)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">else</span> {</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>      bounds <span class="ot">&lt;-</span> x <span class="sc">&gt;</span> <span class="fu">quantile</span>(x, lower_q) <span class="sc">&amp;</span> x <span class="sc">&lt;=</span> <span class="fu">quantile</span>(x, upper_q)</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">c</span>(<span class="at">min =</span> <span class="fu">min</span>(x[bounds]), <span class="at">max =</span> <span class="fu">max</span>(x[bounds]))</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a> </span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>  dt[, {</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    quartiles <span class="ot">&lt;-</span> <span class="fu">quantile</span>(<span class="fu">get</span>(rate_col), <span class="fu">c</span>(<span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">0.75</span>))</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Create the summary list</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">list</span>(</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>      <span class="at">mean =</span> <span class="fu">mean</span>(<span class="fu">get</span>(rate_col)),</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>      <span class="at">IQR =</span> <span class="fu">IQR</span>(<span class="fu">get</span>(rate_col)),</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>      <span class="at">min =</span> <span class="fu">min</span>(<span class="fu">get</span>(rate_col)),</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>      <span class="at">q1 =</span> quartiles[<span class="dv">1</span>],</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>      <span class="at">median =</span> quartiles[<span class="dv">2</span>],</span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>      <span class="at">q3 =</span> quartiles[<span class="dv">3</span>],</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>      <span class="at">max =</span> <span class="fu">max</span>(<span class="fu">get</span>(rate_col)),</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>     </span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>     <span class="co"># Calculate ranges for each quartile</span></span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>      <span class="fu">setNames</span>(</span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>        <span class="fu">c</span>(<span class="fu">get_quartile_range</span>(<span class="fu">get</span>(rate_col), <span class="dv">0</span>, <span class="fl">0.25</span>),      <span class="co"># Q1</span></span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>          <span class="fu">get_quartile_range</span>(<span class="fu">get</span>(rate_col), <span class="fl">0.25</span>, <span class="fl">0.5</span>),    <span class="co"># Q2</span></span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>          <span class="fu">get_quartile_range</span>(<span class="fu">get</span>(rate_col), <span class="fl">0.5</span>, <span class="fl">0.75</span>),    <span class="co"># Q3</span></span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>          <span class="fu">get_quartile_range</span>(<span class="fu">get</span>(rate_col), <span class="fl">0.75</span>)),        <span class="co"># Q4</span></span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>        <span class="fu">c</span>(<span class="st">&quot;q1_min&quot;</span>, <span class="st">&quot;q1_max&quot;</span>, <span class="st">&quot;q2_min&quot;</span>, <span class="st">&quot;q2_max&quot;</span>, </span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>          <span class="st">&quot;q3_min&quot;</span>, <span class="st">&quot;q3_max&quot;</span>, <span class="st">&quot;q4_min&quot;</span>, <span class="st">&quot;q4_max&quot;</span>)</span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>  }, by <span class="ot">=</span> by_col]</span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="plotting-functions" class="level2">
+<h2 class="anchored" data-anchor-id="plotting-functions">Plotting functions</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: function-plot_lab_count</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>plot_lab_count <span class="ot">&lt;-</span> <span class="cf">function</span>(dt, <span class="at">fill_var =</span> <span class="cn">NULL</span>) {</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  afcharts<span class="sc">::</span><span class="fu">use_afcharts</span>()</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  p <span class="ot">&lt;-</span> dt <span class="sc">|&gt;</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> year, <span class="at">y =</span> phbudi_any)) <span class="sc">+</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">geom_col</span>(<span class="fu">aes</span>(<span class="at">fill =</span> <span class="cf">if</span>(<span class="sc">!</span><span class="fu">is.null</span>(fill_var)) <span class="fu">get</span>(fill_var))) <span class="sc">+</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span>comma) <span class="sc">+</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">labs</span>(</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>      <span class="at">x =</span> <span class="cn">NULL</span>,</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>      <span class="at">y =</span> <span class="cn">NULL</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">theme</span>(</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>      <span class="at">legend.position =</span> <span class="cf">if</span>(<span class="fu">is.null</span>(fill_var)) <span class="st">&quot;none&quot;</span> <span class="cf">else</span> <span class="st">&quot;right&quot;</span>,</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>      <span class="at">plot.title.position =</span> <span class="st">&quot;plot&quot;</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(p)</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: function-plot_lab_rate</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>plot_lab_rate <span class="ot">&lt;-</span> <span class="cf">function</span>(dt, <span class="at">fill_var =</span> <span class="cn">NULL</span>) {</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  afcharts<span class="sc">::</span><span class="fu">use_afcharts</span>()</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  p <span class="ot">&lt;-</span> dt <span class="sc">|&gt;</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> year, <span class="at">y =</span> lab_rate)) <span class="sc">+</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">geom_col</span>(<span class="fu">aes</span>(<span class="at">fill =</span> <span class="cf">if</span>(<span class="sc">!</span><span class="fu">is.null</span>(fill_var)) <span class="fu">get</span>(fill_var))) <span class="sc">+</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span>percent) <span class="sc">+</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">labs</span>(</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>      <span class="at">x =</span> <span class="cn">NULL</span>,</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>      <span class="at">y =</span> <span class="cn">NULL</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">theme</span>(</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>      <span class="at">legend.position =</span> <span class="cf">if</span>(<span class="fu">is.null</span>(fill_var)) <span class="st">&quot;none&quot;</span> <span class="cf">else</span> <span class="st">&quot;right&quot;</span>,</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>      <span class="at">plot.title.position =</span> <span class="st">&quot;plot&quot;</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a> </span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(p)</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>create_summary_table <span class="ot">&lt;-</span> <span class="cf">function</span>(summary_stats) {</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  formatted_stats <span class="ot">&lt;-</span> summary_stats[, .(</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">Year =</span> year,</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Q1 Range</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">sprintf</span>(<span class="st">&quot;%.1f%% - %.1f%%&quot;</span>,</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>                         q1_min <span class="sc">*</span> <span class="dv">100</span>, q1_max <span class="sc">*</span> <span class="dv">100</span>),</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Q2 Range</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">sprintf</span>(<span class="st">&quot;%.1f%% - %.1f%%&quot;</span>, </span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>                         q2_min <span class="sc">*</span> <span class="dv">100</span>, q2_max <span class="sc">*</span> <span class="dv">100</span>),</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Q3 Range</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">sprintf</span>(<span class="st">&quot;%.1f%% - %.1f%%&quot;</span>, </span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>                         q3_min <span class="sc">*</span> <span class="dv">100</span>, q3_max <span class="sc">*</span> <span class="dv">100</span>),</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Q4 Range</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">sprintf</span>(<span class="st">&quot;%.1f%% - %.1f%%&quot;</span>, </span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>                         q4_min <span class="sc">*</span> <span class="dv">100</span>, q4_max <span class="sc">*</span> <span class="dv">100</span>),</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Overall IQR</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">sprintf</span>(<span class="st">&quot;%.1f%% - %.1f%%&quot;</span>, </span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>                            q1 <span class="sc">*</span> <span class="dv">100</span>, q3 <span class="sc">*</span> <span class="dv">100</span>)</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>  )]</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>  gt_table <span class="ot">&lt;-</span> gt<span class="sc">::</span><span class="fu">gt</span>(formatted_stats) <span class="sc">|&gt;</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>    gt<span class="sc">::</span><span class="fu">tab_header</span>(</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>      <span class="at">title =</span> <span class="st">&quot;LAB Treatment Rates by Quartile&quot;</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>    gt<span class="sc">::</span><span class="fu">fmt_percent</span>(</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>      <span class="at">columns =</span> <span class="fu">c</span>(<span class="st">`</span><span class="at">Q1 Range</span><span class="st">`</span>, <span class="st">`</span><span class="at">Q2 Range</span><span class="st">`</span>, <span class="st">`</span><span class="at">Q3 Range</span><span class="st">`</span>, <span class="st">`</span><span class="at">Q4 Range</span><span class="st">`</span>, <span class="st">`</span><span class="at">Overall IQR</span><span class="st">`</span>),</span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>      <span class="at">decimals =</span> <span class="dv">1</span></span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>   )</span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(gt_table)</span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="validation" class="level2">
+<h2 class="anchored" data-anchor-id="validation">Validation</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>validate_merges <span class="ot">&lt;-</span> <span class="cf">function</span>(sir_df, main_df, final_df) {</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Check we haven&#39;t lost or gained any people through the merges</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  initial_count <span class="ot">&lt;-</span> main_df[, <span class="fu">length</span>(<span class="fu">unique</span>(client_random_id))]</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>  final_count <span class="ot">&lt;-</span> final_df[, <span class="fu">length</span>(<span class="fu">unique</span>(client_random_id))]</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>  assertthat<span class="sc">::</span><span class="fu">assert_that</span>(</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>    final_count <span class="sc">&lt;=</span> initial_count,</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">msg =</span> <span class="st">&quot;More ids after merge than before - check for duplicates&quot;</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Check geography mapping is complete</span></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>  assertthat<span class="sc">::</span><span class="fu">assert_that</span>(</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">all</span>(<span class="sc">!</span><span class="fu">is.na</span>(final_df<span class="sc">$</span>utla23nm)),</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">msg =</span> <span class="st">&quot;Missing UTLA names after geography merge&quot;</span></span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>validate_aggregation <span class="ot">&lt;-</span> <span class="cf">function</span>(final_df, aggregated_df) {</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Total LAB treatments should match before and after aggregation</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  total_lab_pre <span class="ot">&lt;-</span> final_df[, <span class="fu">sum</span>(phbudi_any)]</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  total_lab_post <span class="ot">&lt;-</span> aggregated_df[, <span class="fu">sum</span>(phbudi_any)]</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  assertthat<span class="sc">::</span><span class="fu">assert_that</span>(</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">abs</span>(total_lab_pre <span class="sc">-</span> total_lab_post) <span class="sc">&lt;</span> <span class="fl">1e-10</span>,</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">msg =</span> <span class="st">&quot;LAB totals don&#39;t match after aggregation&quot;</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Total people receiving any treatment should match</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>  total_people_pre <span class="ot">&lt;-</span> final_df[, .N]</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  total_people_post <span class="ot">&lt;-</span> aggregated_df[, <span class="fu">sum</span>(phbudi_any <span class="sc">+</span> other_ost)]</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>  assertthat<span class="sc">::</span><span class="fu">assert_that</span>(</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">abs</span>(total_people_pre <span class="sc">-</span> total_people_post) <span class="sc">&lt;</span> <span class="fl">1e-10</span>,</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">msg =</span> <span class="st">&quot;Totals don&#39;t match after aggregation&quot;</span></span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>validate_rate <span class="ot">&lt;-</span> <span class="cf">function</span>(df) {</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Check rates are between 0 and 1</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  assertthat<span class="sc">::</span><span class="fu">assert_that</span>(</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">all</span>(df<span class="sc">$</span>lab_rate <span class="sc">&gt;=</span> <span class="dv">0</span> <span class="sc">&amp;</span> df<span class="sc">$</span>lab_rate <span class="sc">&lt;=</span> <span class="dv">1</span>),</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">msg =</span> <span class="st">&quot;Invalid rates detected&quot;</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Verify rate calculation matches raw counts</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  df[, {</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    calculated_rate <span class="ot">&lt;-</span> phbudi_any <span class="sc">/</span> (phbudi_any <span class="sc">+</span> other_ost)</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>    assertthat<span class="sc">::</span><span class="fu">assert_that</span>(</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>      <span class="fu">all</span>(<span class="fu">abs</span>(calculated_rate <span class="sc">-</span> lab_rate) <span class="sc">&lt;</span> <span class="fl">1e-10</span>),</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>      <span class="at">msg =</span> <span class="st">&quot;Rate calculations don&#39;t match raw counts&quot;</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>  }]</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co">#&#39;A function to extract the information about the three datasets we&#39;re</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&#39; interested in and combine it into one CSV file.</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>get_data_dictionary <span class="ot">&lt;-</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">function</span>(<span class="at">dictionary_xlsx =</span> <span class="st">&quot;data/RAND-data-dictionary.xlsx&quot;</span>) {</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">file.exists</span>(<span class="st">&quot;data/data-dictionary.csv&quot;</span>)) {</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>      <span class="fu">return</span>(data.table<span class="sc">::</span><span class="fu">fread</span>(<span class="st">&quot;data/data-dictionary.csv&quot;</span>))</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    dd_main <span class="ot">&lt;-</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>      openxlsx<span class="sc">::</span><span class="fu">read.xlsx</span>(<span class="at">xlsxFile =</span> <span class="st">&quot;data/RAND-data-dictionary.xlsx&quot;</span>,</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>                          <span class="at">sheet =</span> <span class="st">&quot;Main table - journeys&quot;</span>,</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>                          <span class="at">cols =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">4</span><span class="sc">:</span><span class="dv">6</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>      janitor<span class="sc">::</span><span class="fu">clean_names</span>() <span class="sc">|&gt;</span></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">rename</span>(<span class="st">&quot;column&quot;</span> <span class="ot">=</span> column_name)</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>    dd_sir <span class="ot">&lt;-</span></span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>      openxlsx<span class="sc">::</span><span class="fu">read.xlsx</span>(<span class="at">xlsxFile =</span> <span class="st">&quot;data/RAND-data-dictionary.xlsx&quot;</span>,</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>                          <span class="at">sheet =</span> <span class="st">&quot;SIR table&quot;</span>,</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>                          <span class="at">cols =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>      janitor<span class="sc">::</span><span class="fu">clean_names</span>()</span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>    dd_top <span class="ot">&lt;-</span></span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>      openxlsx<span class="sc">::</span><span class="fu">read.xlsx</span>(<span class="at">xlsxFile =</span> <span class="st">&quot;data/RAND-data-dictionary.xlsx&quot;</span>,</span>
+<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a>                          <span class="at">sheet =</span> <span class="st">&quot;TOP table&quot;</span>,</span>
+<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a>                          <span class="at">cols =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a>      janitor<span class="sc">::</span><span class="fu">clean_names</span>()</span>
+<span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a>    data_dictionary <span class="ot">&lt;-</span> data.table<span class="sc">::</span><span class="fu">rbindlist</span>(<span class="at">l =</span> <span class="fu">list</span>(dd_main, dd_sir, dd_top))</span>
+<span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a>    data.table<span class="sc">::</span><span class="fu">fwrite</span>(data_dictionary, <span class="st">&quot;data/data-dictionary.csv&quot;</span>)</span>
+<span id="cb15-31"><a href="#cb15-31" aria-hidden="true" tabindex="-1"></a>    data_dictionary</span>
+<span id="cb15-32"><a href="#cb15-32" aria-hidden="true" tabindex="-1"></a>  }</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>render_data_dictionary <span class="ot">&lt;-</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">function</span>() {</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    dd <span class="ot">&lt;-</span> <span class="fu">get_data_dictionary</span>()</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    rgx <span class="ot">&lt;-</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>      <span class="fu">paste</span>(<span class="fu">c</span>(<span class="fu">colnames</span>(sir_df),</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>              <span class="fu">colnames</span>(main_df)),</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">collapse =</span> <span class="st">&quot;|&quot;</span>)</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>    dd <span class="ot">&lt;-</span></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>      dd[<span class="fu">grep</span>(<span class="at">pattern =</span> rgx, <span class="at">x =</span> column, <span class="at">perl =</span> <span class="cn">TRUE</span>), ]</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>    data.table<span class="sc">::</span><span class="fu">setnames</span>(dd, <span class="at">new =</span> snakecase<span class="sc">::</span>to_sentence_case)</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>    gt<span class="sc">::</span><span class="fu">gt</span>(dd)</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 </section>
